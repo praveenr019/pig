@@ -132,7 +132,7 @@ public class SparkLauncher extends Launcher {
         String currentDirectoryPath = Paths.get(".").toAbsolutePath().normalize().toString() + "/";
         startSparkJob(pigContext,currentDirectoryPath);
         LinkedList<POStore> stores = PlanHelper.getPhysicalOperators(
-                physicalPlan, POStore.class);
+                plan.getRoots().get(0).mapPlan, POStore.class);
         POStore firstStore = stores.getFirst();
         if( firstStore != null ){
             MapRedUtil.setupStreamingDirsConfSingle(firstStore, pigContext, c);
