@@ -84,6 +84,7 @@ import org.apache.pig.backend.hadoop.executionengine.spark.converter.SplitConver
 import org.apache.pig.backend.hadoop.executionengine.spark.converter.StoreConverter;
 import org.apache.pig.backend.hadoop.executionengine.spark.converter.StreamConverter;
 import org.apache.pig.backend.hadoop.executionengine.spark.converter.UnionConverter;
+import org.apache.pig.backend.hadoop.executionengine.spark.operator.POCollectedGroupSpark;
 import org.apache.pig.backend.hadoop.executionengine.spark.operator.POStreamSpark;
 import org.apache.pig.backend.hadoop.executionengine.spark.optimizer.AccumulatorOptimizer;
 import org.apache.pig.backend.hadoop.executionengine.spark.plan.SparkCompiler;
@@ -199,7 +200,7 @@ public class SparkLauncher extends Launcher {
 		convertMap.put(POSort.class, new SortConverter());
 		convertMap.put(POSplit.class, new SplitConverter());
 		convertMap.put(POSkewedJoin.class, new SkewedJoinConverter());
-		convertMap.put(POCollectedGroup.class, new CollectedGroupConverter());
+		convertMap.put(POCollectedGroupSpark.class, new CollectedGroupConverter());
 		convertMap.put(POCounter.class, new CounterConverter());
 		convertMap.put(PORank.class, new RankConverter());
 		convertMap.put(POStreamSpark.class, new StreamConverter(confBytes));

@@ -57,6 +57,7 @@ import org.apache.pig.backend.hadoop.executionengine.physicalLayer.relationalOpe
 import org.apache.pig.backend.hadoop.executionengine.physicalLayer.relationalOperators.Packager;
 import org.apache.pig.backend.hadoop.executionengine.physicalLayer.util.PlanHelper;
 import org.apache.pig.backend.hadoop.executionengine.spark.operator.NativeSparkOperator;
+import org.apache.pig.backend.hadoop.executionengine.spark.operator.POCollectedGroupSpark;
 import org.apache.pig.backend.hadoop.executionengine.spark.operator.POStreamSpark;
 import org.apache.pig.impl.PigContext;
 import org.apache.pig.impl.io.FileSpec;
@@ -478,49 +479,50 @@ public class SparkCompiler extends PhyPlanVisitor {
 	@Override
 	public void visitCollectedGroup(POCollectedGroup op)
 			throws VisitorException {
-		List<PhysicalOperator> roots = curSparkOp.physicalPlan.getRoots();
-		if (roots.size() != 1) {
-			int errCode = 2171;
-			String errMsg = "Expected one but found more then one root physical operator in physical physicalPlan.";
-			throw new SparkCompilerException(errMsg, errCode, PigException.BUG);
-		}
+        POCollectedGroupSpark opSpark = new POCollectedGroupSpark(op);
+        List<PhysicalOperator> roots = curSparkOp.physicalPlan.getRoots();
+        if (roots.size() != 1) {
+            int errCode = 2171;
+            String errMsg = "Expected one but found more then one root physical operator in physical physicalPlan.";
+            throw new SparkCompilerException(errMsg, errCode, PigException.BUG);
+        }
 
-		PhysicalOperator phyOp = roots.get(0);
-		if (!(phyOp instanceof POLoad)) {
-			int errCode = 2172;
-			String errMsg = "Expected physical operator at root to be POLoad. Found : "
-					+ phyOp.getClass().getCanonicalName();
-			throw new SparkCompilerException(errMsg, errCode, PigException.BUG);
-		}
+        PhysicalOperator phyOp = roots.get(0);
+        if (!(phyOp instanceof POLoad)) {
+            int errCode = 2172;
+            String errMsg = "Expected physical operator at root to be POLoad. Found : "
+                    + phyOp.getClass().getCanonicalName();
+            throw new SparkCompilerException(errMsg, errCode, PigException.BUG);
+        }
 
-		LoadFunc loadFunc = ((POLoad) phyOp).getLoadFunc();
-		try {
-			if (!(CollectableLoadFunc.class.isAssignableFrom(loadFunc
-					.getClass()))) {
-				int errCode = 2249;
-				throw new SparkCompilerException(
-						"While using 'collected' on group; data must be loaded via loader implementing CollectableLoadFunc.",
-						errCode);
-			}
-			((CollectableLoadFunc) loadFunc).ensureAllKeyInstancesInSameSplit();
-		} catch (SparkCompilerException e) {
-			throw (e);
-		} catch (IOException e) {
-			int errCode = 2034;
-			String msg = "Error compiling operator "
-					+ op.getClass().getSimpleName();
-			throw new SparkCompilerException(msg, errCode, PigException.BUG, e);
-		}
+        LoadFunc loadFunc = ((POLoad) phyOp).getLoadFunc();
+        try {
+            if (!(CollectableLoadFunc.class.isAssignableFrom(loadFunc
+                    .getClass()))) {
+                int errCode = 2249;
+                throw new SparkCompilerException(
+                        "While using 'collected' on group; data must be loaded via loader implementing CollectableLoadFunc.",
+                        errCode);
+            }
+            ((CollectableLoadFunc) loadFunc).ensureAllKeyInstancesInSameSplit();
+        } catch (SparkCompilerException e) {
+            throw (e);
+        } catch (IOException e) {
+            int errCode = 2034;
+            String msg = "Error compiling operator "
+                    + opSpark.getClass().getSimpleName();
+            throw new SparkCompilerException(msg, errCode, PigException.BUG, e);
+        }
 
-		try {
-			nonBlocking(op);
-			phyToSparkOpMap.put(op, curSparkOp);
-		} catch (Exception e) {
-			int errCode = 2034;
-			String msg = "Error compiling operator "
-					+ op.getClass().getSimpleName();
-			throw new SparkCompilerException(msg, errCode, PigException.BUG, e);
-		}
+        try {
+            nonBlocking(opSpark);
+            phyToSparkOpMap.put(opSpark, curSparkOp);
+        } catch (Exception e) {
+            int errCode = 2034;
+            String msg = "Error compiling operator "
+                    + opSpark.getClass().getSimpleName();
+            throw new SparkCompilerException(msg, errCode, PigException.BUG, e);
+        }
 	}
 
 	@Override
