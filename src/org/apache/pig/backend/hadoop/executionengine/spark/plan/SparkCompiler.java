@@ -605,7 +605,15 @@ public class SparkCompiler extends PhyPlanVisitor {
 
 	@Override
 	public void visitMergeJoin(POMergeJoin joinOp) throws VisitorException {
-		// TODO
+        try {
+            nonBlocking(joinOp);
+            phyToSparkOpMap.put(joinOp, curSparkOp);
+        } catch (Exception e) {
+            int errCode = 2034;
+            String msg = "Error compiling operator "
+                    + joinOp.getClass().getSimpleName();
+            throw new SparkCompilerException(msg, errCode, PigException.BUG, e);
+        }
 	}
 
 	private void processUDFs(PhysicalPlan plan) throws VisitorException {

@@ -74,7 +74,7 @@ public class POMergeJoin extends PhysicalOperator {
     private boolean firstTime = true;
 
     //The Local Rearrange operators modeling the join key
-    private POLocalRearrange[] LRs;
+    public POLocalRearrange[] LRs;
 
     private transient LoadFunc rightLoader;
     private OperatorKey opKey;
